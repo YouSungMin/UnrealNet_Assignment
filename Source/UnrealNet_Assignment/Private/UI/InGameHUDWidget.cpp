@@ -34,7 +34,7 @@ void UInGameHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime
 
 void UInGameHUDWidget::UpdateRemainingTimeText(float NewTime)
 {
-    UE_LOG(LogTemp, Log, TEXT("RemainingTimeText : %f"), NewTime);
+    //UE_LOG(LogTemp, Log, TEXT("RemainingTimeText : %f"), NewTime);
     if (RemainingTimeText)
     {
         int32 Seconds = FMath::FloorToInt(NewTime);

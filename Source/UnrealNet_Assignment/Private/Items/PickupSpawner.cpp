@@ -43,7 +43,6 @@ void APickupSpawner::OnConstruction(const FTransform& Transform)
 
 	if (SpawnRadiusComp)
 	{
-		// SpawnRadius 변수 값에 맞춰서 구체 크기 변경
 		SpawnRadiusComp->SetSphereRadius(SpawnRadius);
 	}
 }
