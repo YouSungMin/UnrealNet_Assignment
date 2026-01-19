@@ -20,14 +20,16 @@ public:
 	void UpdateRemainingTimeText(float NewTime);
 
 	UFUNCTION()
-	void UpdateMyScoreText();
+	void UpdateMyScoreText(int32 NewScore);
 
 	UFUNCTION()
-	void UpdateOpponentScoreText();
+	void UpdateOpponentScoreText(int32 NewScore);
 
+	void BindPlayerStates();
 protected:
 	virtual void NativeConstruct()override;
 
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> RemainingTimeText;
@@ -37,4 +39,7 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> OpponentScoreText;
+
+private:
+	bool bIsPlayerStatsBound = false;
 };

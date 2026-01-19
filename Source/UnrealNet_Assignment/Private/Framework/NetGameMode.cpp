@@ -10,9 +10,36 @@ ANetGameMode::ANetGameMode()
 	RoundTime = 60.0f;
 }
 
+void ANetGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+
+	int32 CurrentPlayerCount = GetNumPlayers();
+
+	if (CurrentPlayerCount >= 2)
+	{
+		//if (!GetWorld()->GetTimerManager().IsTimerActive(WaitingTimerHandle))
+		//{
+		//	GetWorld()->GetTimerManager().SetTimer(
+		//			WaitingTimerHandle,
+		//			this,
+		//			&ANetGameMode::StartRound,
+		//			5.0f,
+		//			false
+		//		);
+		//}
+		StartRound();
+	}
+}
+
 void ANetGameMode::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (!bIsGameStarted)
+	{
+		return;
+	}
 
 	RoundTime = FMath::Max(0.0f, RoundTime - DeltaTime);
 	//UE_LOG(LogTemp,Log,TEXT("RoundTime : %f"), RoundTime);
@@ -25,6 +52,11 @@ void ANetGameMode::Tick(float DeltaTime)
 	{
 		FinishRound();
 	}
+}
+
+void ANetGameMode::StartRound()
+{
+	bIsGameStarted = true;
 }
 
 void ANetGameMode::FinishRound()

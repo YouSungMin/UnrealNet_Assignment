@@ -16,12 +16,18 @@ class UNREALNET_ASSIGNMENT_API ANetGameMode : public AGameModeBase
 public:
 	ANetGameMode();
 
+	virtual void PostLogin(APlayerController* NewPlayer) override;
 protected:
 	virtual void Tick(float DeltaTime)override;
 
-	void FinishRound();
+	void StartRound();
+	void FinishRound(); 
+
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "RoundTime")
 	float RoundTime;
+	
+	bool bIsGameStarted = false;
 
+	FTimerHandle WaitingTimerHandle;
 };
