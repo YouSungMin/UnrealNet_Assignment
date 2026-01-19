@@ -9,6 +9,7 @@ void ANetGameState::SetGameRemainingTime(float NewTime)
 	if (HasAuthority())
 	{
 		GameRemainingTime = NewTime;
+		//UE_LOG(LogTemp, Log, TEXT("GameRemainingTime : %f"), GameRemainingTime);
 		OnRep_RemainingTime();
 	}
 }
@@ -23,6 +24,7 @@ void ANetGameState::OnRep_RemainingTime()
 {
 	if (OnTimeUpdated.IsBound())
 	{
+		//UE_LOG(LogTemp, Log, TEXT("OnTimeUpdated Broadcast"));
 		OnTimeUpdated.Broadcast(GameRemainingTime);
 	}
 }

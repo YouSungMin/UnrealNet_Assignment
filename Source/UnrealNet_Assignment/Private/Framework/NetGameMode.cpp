@@ -15,7 +15,7 @@ void ANetGameMode::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	RoundTime = FMath::Max(0.0f, RoundTime - DeltaTime);
-
+	//UE_LOG(LogTemp,Log,TEXT("RoundTime : %f"), RoundTime);
 	if (ANetGameState* MyGameState = GetGameState<ANetGameState>())
 	{
 		MyGameState->SetGameRemainingTime(RoundTime);

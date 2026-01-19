@@ -25,7 +25,7 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
-	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Game Data")
+	UPROPERTY(ReplicatedUsing = OnRep_RemainingTime, BlueprintReadOnly, Category = "Game Data")
 	float GameRemainingTime = 0.0f;
 
 	UFUNCTION()
