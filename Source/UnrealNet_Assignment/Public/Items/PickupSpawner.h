@@ -23,6 +23,8 @@ protected:
 
 	void SpawnItem();
 
+	UFUNCTION()
+	void HandleGameActiveChanged(bool bIsActive);
 protected:
 	UPROPERTY()
 	TWeakObjectPtr<class UNavigationSystemV1> NavSystem;

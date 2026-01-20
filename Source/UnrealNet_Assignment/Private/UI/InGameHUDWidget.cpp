@@ -15,12 +15,13 @@ void UInGameHUDWidget::NativeConstruct()
     {
         UpdateRemainingTimeText(NetGameState->GetGameRemainingTime());
 
+        NetGameState->OnStartCountdownUpdated.AddDynamic(this, &UInGameHUDWidget::UpdateInfoText);
         NetGameState->OnTimeUpdated.RemoveDynamic(this, &UInGameHUDWidget::UpdateRemainingTimeText);
         NetGameState->OnTimeUpdated.AddDynamic(this, &UInGameHUDWidget::UpdateRemainingTimeText);
         NetGameState->OnGameEnded.AddDynamic(this, &UInGameHUDWidget::ShowGameResult);
-    }
-    ResultText->SetVisibility(ESlateVisibility::Hidden);
 
+        UpdateInfoText(NetGameState->GetStartCountdownTime());
+    }
     bIsPlayerStatsBound = false;
 }
 
@@ -96,6 +97,29 @@ void UInGameHUDWidget::UpdateOpponentScoreText(int32 NewScore)
     if (OpponentScoreText)
     {
         OpponentScoreText->SetText(FText::AsNumber(NewScore));
+    }
+}
+
+void UInGameHUDWidget::UpdateInfoText(int32 NewCount)
+{
+    if (!ResultText) return;
+
+    if (NewCount < 0)
+    {
+        ResultText->SetText(FText::FromString(TEXT("다른 플레이어를 기다리는 중...")));
+        ResultText->SetColorAndOpacity(FLinearColor::White);
+        ResultText->SetVisibility(ESlateVisibility::Visible);
+    }
+    else if (NewCount > 0)
+    {
+        FString CountStr = FString::Printf(TEXT("%d"), NewCount);
+        ResultText->SetText(FText::FromString(CountStr));
+        ResultText->SetColorAndOpacity(FLinearColor::Yellow);
+        ResultText->SetVisibility(ESlateVisibility::Visible);
+    }
+    else
+    {
+        ResultText->SetVisibility(ESlateVisibility::Hidden);
     }
 }
 

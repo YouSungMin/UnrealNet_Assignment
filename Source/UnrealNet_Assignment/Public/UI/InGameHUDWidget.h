@@ -25,6 +25,9 @@ public:
 	UFUNCTION()
 	void UpdateOpponentScoreText(int32 NewScore);
 
+	UFUNCTION()
+	void UpdateInfoText(int32 NewCount);
+
 	void BindPlayerStates();
 
 protected:

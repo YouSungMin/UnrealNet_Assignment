@@ -4,6 +4,8 @@
 #include "Framework/NetGameMode.h"
 #include "Framework/NetGameState.h"
 #include "Framework/NetPlayerState.h"
+#include "GameFramework/PlayerStart.h"
+#include "Kismet/GameplayStatics.h"
 
 ANetGameMode::ANetGameMode()
 {
@@ -16,20 +18,57 @@ void ANetGameMode::PostLogin(APlayerController* NewPlayer)
 	Super::PostLogin(NewPlayer);
 
 	int32 CurrentPlayerCount = GetNumPlayers();
-
-	if (CurrentPlayerCount >= 2)
+	if (CurrentPlayerCount < 2)
 	{
-		//if (!GetWorld()->GetTimerManager().IsTimerActive(WaitingTimerHandle))
-		//{
-		//	GetWorld()->GetTimerManager().SetTimer(
-		//			WaitingTimerHandle,
-		//			this,
-		//			&ANetGameMode::StartRound,
-		//			5.0f,
-		//			false
-		//		);
-		//}
-		StartRound();
+		if (NetGameState)
+		{
+			NetGameState->UpdateStartCountdown(-1);
+		}
+	}
+	else if (CurrentPlayerCount >= 2)
+	{
+		if (!GetWorld()->GetTimerManager().IsTimerActive(WaitingTimerHandle))
+		{
+			GetWorld()->GetTimerManager().SetTimer(
+				WaitingTimerHandle,
+				this,
+				&ANetGameMode::HandleStartingCountdown,
+				1.0f,
+				true
+			);
+		}
+	}
+}
+
+AActor* ANetGameMode::ChoosePlayerStart(AController* Player)
+{
+	int32 PlayerIndex = GetNumPlayers();
+
+	FString TargetTag = FString::Printf(TEXT("Spawn_%d"), PlayerIndex);
+
+	TArray<AActor*> FoundPlayerStarts;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), FoundPlayerStarts);
+
+	for (AActor* Actor : FoundPlayerStarts)
+	{
+		APlayerStart* StartParams = Cast<APlayerStart>(Actor);
+		if (StartParams && StartParams->PlayerStartTag == FName(*TargetTag))
+		{
+			return StartParams;
+		}
+	}
+
+	return Super::ChoosePlayerStart(Player);
+}
+
+void ANetGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	NetGameState = GetGameState<ANetGameState>();
+	if (NetGameState)
+	{
+		NetGameState->SetGameRemainingTime(RoundTime);
 	}
 }
 
@@ -44,9 +83,9 @@ void ANetGameMode::Tick(float DeltaTime)
 
 	RoundTime = FMath::Max(0.0f, RoundTime - DeltaTime);
 	//UE_LOG(LogTemp,Log,TEXT("RoundTime : %f"), RoundTime);
-	if (ANetGameState* MyGameState = GetGameState<ANetGameState>())
+	if (NetGameState)
 	{
-		MyGameState->SetGameRemainingTime(RoundTime);
+		NetGameState->SetGameRemainingTime(RoundTime);
 	}
 
 	if (RoundTime <= 0)
@@ -58,6 +97,11 @@ void ANetGameMode::Tick(float DeltaTime)
 void ANetGameMode::StartRound()
 {
 	bIsGameStarted = true;
+
+	if (NetGameState)
+	{
+		NetGameState->SetGameActive(true);
+	}
 }
 
 void ANetGameMode::FinishRound()
@@ -65,20 +109,19 @@ void ANetGameMode::FinishRound()
 	if(!bIsGameStarted) return;
 	bIsGameStarted = false;
 
-	ANetGameState* GS = GetGameState<ANetGameState>();
-	if (!GS) return;
+	if (!NetGameState) return;
 
 	int32 P1Score = -1;
 	int32 P2Score = -1;
 	FString P1Name = TEXT("");
 	FString P2Name = TEXT("");
 
-	if (GS->PlayerArray.Num() >= 2)
+	if (NetGameState->PlayerArray.Num() >= 2)
 	{
-		ANetPlayerState* PS1 = Cast<ANetPlayerState>(GS->PlayerArray[0]);
+		ANetPlayerState* PS1 = Cast<ANetPlayerState>(NetGameState->PlayerArray[0]);
 		if (PS1) { P1Score = PS1->GetGameScore(); P1Name = PS1->GetPlayerName(); }
 
-		ANetPlayerState* PS2 = Cast<ANetPlayerState>(GS->PlayerArray[1]);
+		ANetPlayerState* PS2 = Cast<ANetPlayerState>(NetGameState->PlayerArray[1]);
 		if (PS2) { P2Score = PS2->GetGameScore(); P2Name = PS2->GetPlayerName(); }
 	}
 
@@ -98,5 +141,24 @@ void ANetGameMode::FinishRound()
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("게임 종료 승자: %s"), *FinalWinner);
-	GS->SetWinner(FinalWinner);
+	NetGameState->SetWinner(FinalWinner);
+	NetGameState->SetGameActive(false);
+	NetGameState->SetWinner(FinalWinner);
+}
+
+void ANetGameMode::HandleStartingCountdown()
+{
+	if (!NetGameState) return;
+
+	NetGameState->UpdateStartCountdown(WaitingTime);
+
+	if (WaitingTime <= 0)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(WaitingTimerHandle);
+		StartRound();
+	}
+	else
+	{
+		WaitingTime--;
+	}
 }

@@ -2,9 +2,10 @@
 
 
 #include "Items/PickupSpawner.h"
-#include "NavigationSystem.h"
 #include "Items/ScorePickup.h"
+#include "NavigationSystem.h"
 #include "Components/SphereComponent.h"
+#include "Framework/NetGameState.h"
 
 // Sets default values
 APickupSpawner::APickupSpawner()
@@ -26,14 +27,11 @@ void APickupSpawner::BeginPlay()
 
 	if (HasAuthority())
 	{
-		// 3초마다 SpawnItem 함수 반복 호출 (루프: true)
-		GetWorld()->GetTimerManager().SetTimer(
-			SpawnTimerHandle,
-			this,
-			&APickupSpawner::SpawnItem,
-			SpawnInterval,
-			true
-		);
+		ANetGameState* GS = Cast<ANetGameState>(GetWorld()->GetGameState());
+		if (GS)
+		{
+			GS->OnGameActiveChanged.AddDynamic(this, &APickupSpawner::HandleGameActiveChanged);
+		}
 	}
 }
 
@@ -65,6 +63,27 @@ void APickupSpawner::SpawnItem()
 		FRotator SpawnRot = FRotator::ZeroRotator;
 
 		GetWorld()->SpawnActor<AActor>(ItemClass, SpawnPos, SpawnRot);
+	}
+}
+
+void APickupSpawner::HandleGameActiveChanged(bool bIsActive)
+{
+	if (!HasAuthority()) return;
+
+	if (bIsActive)
+	{
+		GetWorld()->GetTimerManager().SetTimer(
+			SpawnTimerHandle,
+			this,
+			&APickupSpawner::SpawnItem,
+			SpawnInterval,
+			true
+		);
+		SpawnItem();
+	}
+	else
+	{
+		GetWorld()->GetTimerManager().ClearTimer(SpawnTimerHandle);
 	}
 }
 
