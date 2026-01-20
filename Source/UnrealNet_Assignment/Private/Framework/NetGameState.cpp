@@ -18,6 +18,16 @@ void ANetGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ANetGameState, GameRemainingTime);
+	DOREPLIFETIME(ANetGameState, WinnerName);
+}
+
+void ANetGameState::SetWinner(FString NewWinnerName)
+{
+	if (HasAuthority())
+	{
+		WinnerName = NewWinnerName;
+		OnRep_WinnerName();
+	}
 }
 
 void ANetGameState::OnRep_RemainingTime()
@@ -26,5 +36,14 @@ void ANetGameState::OnRep_RemainingTime()
 	{
 		//UE_LOG(LogTemp, Log, TEXT("OnTimeUpdated Broadcast"));
 		OnTimeUpdated.Broadcast(GameRemainingTime);
+	}
+}
+
+void ANetGameState::OnRep_WinnerName()
+{
+	if (!WinnerName.IsEmpty())
+	{
+		//UE_LOG(LogTemp, Log, TEXT("OnGameEnded Broadcast"));
+		OnGameEnded.Broadcast(WinnerName);
 	}
 }

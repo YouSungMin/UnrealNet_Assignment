@@ -7,6 +7,7 @@
 #include "NetGameState.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTimeUpdated, float, NewTime);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGameEnded, FString, WinnerName);
 /**
  * 
  */
@@ -19,15 +20,29 @@ public:
 
 	inline float GetGameRemainingTime() const { return GameRemainingTime;}
 
-	UPROPERTY(BlueprintAssignable, Category = "Events")
-	FOnTimeUpdated OnTimeUpdated;
+	void SetWinner(FString NewWinnerName);
+
+	UFUNCTION()
+	void OnRep_RemainingTime(); 
+
+	UFUNCTION()
+	void OnRep_WinnerName();
+
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+public:
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnTimeUpdated OnTimeUpdated;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnGameEnded OnGameEnded;
 
 protected:
 	UPROPERTY(ReplicatedUsing = OnRep_RemainingTime, BlueprintReadOnly, Category = "Game Data")
 	float GameRemainingTime = 0.0f;
 
-	UFUNCTION()
-	void OnRep_RemainingTime();
+	UPROPERTY(ReplicatedUsing = OnRep_WinnerName)
+		FString WinnerName = TEXT("");
+
 };

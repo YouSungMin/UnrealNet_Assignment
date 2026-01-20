@@ -26,10 +26,16 @@ public:
 	void UpdateOpponentScoreText(int32 NewScore);
 
 	void BindPlayerStates();
+
 protected:
 	virtual void NativeConstruct()override;
 
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
+private:
+	UFUNCTION()
+	void ShowGameResult(FString WinnerName);
+
 protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> RemainingTimeText;
@@ -39,6 +45,9 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> OpponentScoreText;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> ResultText;
 
 private:
 	bool bIsPlayerStatsBound = false;

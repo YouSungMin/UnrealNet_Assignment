@@ -3,6 +3,7 @@
 
 #include "Framework/NetGameMode.h"
 #include "Framework/NetGameState.h"
+#include "Framework/NetPlayerState.h"
 
 ANetGameMode::ANetGameMode()
 {
@@ -61,4 +62,41 @@ void ANetGameMode::StartRound()
 
 void ANetGameMode::FinishRound()
 {
+	if(!bIsGameStarted) return;
+	bIsGameStarted = false;
+
+	ANetGameState* GS = GetGameState<ANetGameState>();
+	if (!GS) return;
+
+	int32 P1Score = -1;
+	int32 P2Score = -1;
+	FString P1Name = TEXT("");
+	FString P2Name = TEXT("");
+
+	if (GS->PlayerArray.Num() >= 2)
+	{
+		ANetPlayerState* PS1 = Cast<ANetPlayerState>(GS->PlayerArray[0]);
+		if (PS1) { P1Score = PS1->GetGameScore(); P1Name = PS1->GetPlayerName(); }
+
+		ANetPlayerState* PS2 = Cast<ANetPlayerState>(GS->PlayerArray[1]);
+		if (PS2) { P2Score = PS2->GetGameScore(); P2Name = PS2->GetPlayerName(); }
+	}
+
+	FString FinalWinner = TEXT("Draw");
+
+	if (P1Score > P2Score)
+	{
+		FinalWinner = P1Name;
+	}
+	else if (P2Score > P1Score)
+	{
+		FinalWinner = P2Name;
+	}
+	else
+	{
+		FinalWinner = TEXT("Draw");
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("게임 종료 승자: %s"), *FinalWinner);
+	GS->SetWinner(FinalWinner);
 }

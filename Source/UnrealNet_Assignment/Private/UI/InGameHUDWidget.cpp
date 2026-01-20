@@ -17,7 +17,9 @@ void UInGameHUDWidget::NativeConstruct()
 
         NetGameState->OnTimeUpdated.RemoveDynamic(this, &UInGameHUDWidget::UpdateRemainingTimeText);
         NetGameState->OnTimeUpdated.AddDynamic(this, &UInGameHUDWidget::UpdateRemainingTimeText);
+        NetGameState->OnGameEnded.AddDynamic(this, &UInGameHUDWidget::ShowGameResult);
     }
+    ResultText->SetVisibility(ESlateVisibility::Hidden);
 
     bIsPlayerStatsBound = false;
 }
@@ -29,6 +31,41 @@ void UInGameHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime
     if (!bIsPlayerStatsBound)
     {
         BindPlayerStates();
+    }
+}
+
+void UInGameHUDWidget::ShowGameResult(FString WinnerName)
+{
+    FString MyName = TEXT("");
+    if (APlayerState* MyPS = GetOwningPlayerState())
+    {
+        MyName = MyPS->GetPlayerName();
+    }
+
+    FString ResultTextStr = TEXT("");
+    FColor ResultColor = FColor::White;
+
+    if (WinnerName == TEXT("Draw"))
+    {
+        ResultTextStr = TEXT("DRAW");
+        ResultColor = FColor::Yellow;
+    }
+    else if (WinnerName == MyName)
+    {
+        ResultTextStr = TEXT("VICTORY!");
+        ResultColor = FColor::Green;
+    }
+    else
+    {
+        ResultTextStr = TEXT("DEFEAT");
+        ResultColor = FColor::Red;
+    }
+
+    if (ResultText)
+    {
+        ResultText->SetText(FText::FromString(ResultTextStr));
+        ResultText->SetColorAndOpacity(ResultColor);
+        ResultText->SetVisibility(ESlateVisibility::Visible);
     }
 }
 
@@ -93,7 +130,7 @@ void UInGameHUDWidget::BindPlayerStates()
     }
     if (GameState->PlayerArray.Num() >= 2)
     {
-        bIsPlayerStatsBound = true; // 이제 2명 다 왔으니 검사 끝!
+        bIsPlayerStatsBound = true;
         UE_LOG(LogTemp, Warning, TEXT("UI: 플레이어 2명 바인딩 완료. Tick 루프 종료."));
     }
 }
