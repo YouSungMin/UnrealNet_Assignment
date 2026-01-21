@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "NetGameMode.generated.h"
-
+class AController;
 /**
  * 
  */
@@ -18,7 +18,6 @@ public:
 
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
-	virtual AActor* ChoosePlayerStart(AController* Player) override;
 protected:
 	virtual void BeginPlay()override;
 	virtual void Tick(float DeltaTime)override;
@@ -26,7 +25,7 @@ protected:
 	void StartRound();
 	void FinishRound(); 
 	void HandleStartingCountdown();
-
+	void PlayerSpawn(APlayerController* NewPlayer);
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "RoundTime")
 	float RoundTime;

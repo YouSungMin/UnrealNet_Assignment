@@ -15,7 +15,6 @@ APlayerCharacter::APlayerCharacter()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-    //SetPlayerMoveInput(false);
 }
 
 // Called every frame
@@ -55,6 +54,17 @@ void APlayerCharacter::InitPlayerInput()
     {
         GS->OnGameActiveChanged.RemoveDynamic(this, &APlayerCharacter::OnGameActiveChanged);
         GS->OnGameActiveChanged.AddDynamic(this, &APlayerCharacter::OnGameActiveChanged);
+    }
+
+    if (IsLocallyControlled())
+    {
+        if (APlayerController* PC = Cast<APlayerController>(GetController()))
+        {
+            PC->bShowMouseCursor = false;
+
+            FInputModeGameOnly GameInputMode;
+            PC->SetInputMode(GameInputMode);
+        }
     }
 }
 

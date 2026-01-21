@@ -6,6 +6,8 @@
 #include "Framework/NetPlayerState.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/Controller.h"
+#include "GameFramework/Pawn.h"
 
 ANetGameMode::ANetGameMode()
 {
@@ -17,7 +19,9 @@ void ANetGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
+	PlayerSpawn(NewPlayer);
 	int32 CurrentPlayerCount = GetNumPlayers();
+
 	if (CurrentPlayerCount < 2)
 	{
 		if (NetGameState)
@@ -38,27 +42,6 @@ void ANetGameMode::PostLogin(APlayerController* NewPlayer)
 			);
 		}
 	}
-}
-
-AActor* ANetGameMode::ChoosePlayerStart(AController* Player)
-{
-	int32 PlayerIndex = GetNumPlayers();
-
-	FString TargetTag = FString::Printf(TEXT("Spawn_%d"), PlayerIndex);
-
-	TArray<AActor*> FoundPlayerStarts;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), FoundPlayerStarts);
-
-	for (AActor* Actor : FoundPlayerStarts)
-	{
-		APlayerStart* StartParams = Cast<APlayerStart>(Actor);
-		if (StartParams && StartParams->PlayerStartTag == FName(*TargetTag))
-		{
-			return StartParams;
-		}
-	}
-
-	return Super::ChoosePlayerStart(Player);
 }
 
 void ANetGameMode::BeginPlay()
@@ -141,7 +124,6 @@ void ANetGameMode::FinishRound()
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("게임 종료 승자: %s"), *FinalWinner);
-	NetGameState->SetWinner(FinalWinner);
 	NetGameState->SetGameActive(false);
 	NetGameState->SetWinner(FinalWinner);
 }
@@ -160,5 +142,35 @@ void ANetGameMode::HandleStartingCountdown()
 	else
 	{
 		WaitingTime--;
+	}
+}
+
+void ANetGameMode::PlayerSpawn(APlayerController* NewPlayer)
+{
+	int32 PlayerIndex = GetNumPlayers() - 1;
+
+	FString TargetTag = FString::Printf(TEXT("Spawn_%d"), PlayerIndex);
+
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), FoundActors);
+
+	for (AActor* Actor : FoundActors)
+	{
+		if (APlayerStart* TargetStart = Cast<APlayerStart>(Actor))
+		{
+			if (TargetStart->PlayerStartTag == FName(*TargetTag))
+			{
+				if (APawn* MyPawn = NewPlayer->GetPawn())
+				{
+					MyPawn->SetActorLocationAndRotation(
+						TargetStart->GetActorLocation(),
+						TargetStart->GetActorRotation()
+					);
+
+					UE_LOG(LogTemp, Warning, TEXT("플레이어 %d를 %s로 이동시켰습니다."), PlayerIndex, *TargetTag);
+				}
+				break;
+			}
+		}
 	}
 }
